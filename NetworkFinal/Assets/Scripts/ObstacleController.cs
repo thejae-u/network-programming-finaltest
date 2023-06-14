@@ -9,8 +9,7 @@ public class ObstacleController : MonoBehaviour
 
     private float speed;
     private float playerSpeed;
-    private float scaleXSpeed;
-    private float scaleYSpeed;
+    private float scaleSpeed;
 
     private void Start()
     {
@@ -27,10 +26,9 @@ public class ObstacleController : MonoBehaviour
 
     private void GetSpeedFromGameManager()
     {
-        speed = GameManager.Instance.speed;
-        playerSpeed = GameManager.Instance.speed;
-        scaleXSpeed = GameManager.Instance.scaleXSpeed;
-        scaleYSpeed = GameManager.Instance.scaleYSpeed;
+        speed = GameManager.Instance.CurObstacleSpeed;
+        playerSpeed = GameManager.Instance.CurPlayerSpeed;
+        scaleSpeed = GameManager.Instance.CurScaleSpeed;
     }
 
     private void MoveControll()
@@ -44,10 +42,8 @@ public class ObstacleController : MonoBehaviour
 
     private void ScaleControll()
     {
-        if (transform.localScale.x < 5)
-            curScaleX = transform.localScale.x + scaleXSpeed * Time.deltaTime;
-        if (transform.localScale.y < 5)
-            curScaleY = transform.localScale.y + scaleYSpeed * Time.deltaTime;
+        curScaleX = transform.localScale.x + scaleSpeed * Time.deltaTime;
+        curScaleY = transform.localScale.y + scaleSpeed * Time.deltaTime;
         transform.localScale = new Vector2(curScaleX, curScaleY);
     }
 
@@ -63,15 +59,6 @@ public class ObstacleController : MonoBehaviour
         {
             float movePos = transform.position.x - playerSpeed * Time.deltaTime;
             transform.position = new Vector2(movePos, transform.position.y);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            if (GameManager.Instance.IsBoost())
-            {
-                GameManager.Instance.Boost();
-                // 스피드를 일시적 상승
-            }
         }
     }
 

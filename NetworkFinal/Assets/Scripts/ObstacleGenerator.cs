@@ -26,8 +26,11 @@ public class ObstacleGenerator : MonoBehaviour
 
         if (curTime < 0)
         {
-            curTime = genTime;
-            float randomX = Random.Range(-10, 11);
+            if (!GameManager.Instance.IsBoost)
+                curTime = genTime;
+            else
+                curTime = genTime / 2;
+            float randomX = Random.Range(-8, 9);
             Instantiate(obstaclePrefab, new Vector2(randomX, 1.8f), Quaternion.identity);
         }
     }

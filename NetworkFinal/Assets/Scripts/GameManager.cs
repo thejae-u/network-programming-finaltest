@@ -1,19 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public float speed;
+    public float obstacleSpeed;
     public float playerSpeed;
-    public float scaleXSpeed;
-    public float scaleYSpeed;
+    public float scaleSpeed;
+    public float boostSpeed;
+    public float boostTime;
+    public TMP_Text distanceText;
 
     private static GameManager instance;
 
-    private bool isBoost;
+    public bool IsBoost { get; private set; }
+    public bool IsBoostAva { get; private set; }
 
     private float distance;
+    public float CurObstacleSpeed { get; private set; }
+    public float CurScaleSpeed { get; private set; }
+    public float CurPlayerSpeed { get; private set; }
+
 
     private void Awake()
     {
@@ -33,7 +41,7 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            if(instance== null)
+            if (instance == null)
             {
                 return null;
             }
@@ -41,33 +49,78 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void InitSpeed()
+    {
+        CurObstacleSpeed = obstacleSpeed;
+        CurPlayerSpeed = playerSpeed;
+        CurScaleSpeed = scaleSpeed;
+    }
+    
     private void Start()
     {
-        distance = 2000;
+        IsBoost = false;
+        IsBoostAva = true;
+        distance = 1000;
+        InitSpeed();
     }
 
     private void Update()
     {
+        Distance();
+        PlayerInput();
+    }
+    
+    private void Distance()
+    {
         distance -= playerSpeed * Time.deltaTime;
+        distanceText.text = $"Distance : {distance}";
     }
 
-    public bool IsBoost()
+    #region Boost
+    private void PlayerInput()
     {
-        return isBoost;
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (IsBoostAva)
+                Boost();
+        }
     }
 
-    public void Boost()
+    private void Boost()
     {
-        isBoost = true;
+        IsBoost = true;
+        IsBoostAva = false;
+        StartCoroutine(BoostWait());
+    }
+
+    private IEnumerator BoostWait()
+    {
         StartCoroutine(Boosting());
+        yield return new WaitForSeconds(30.0f);
+        IsBoostAva = true;
     }
 
     private IEnumerator Boosting()
     {
-        float savePlayerSpeed = playerSpeed;
-        playerSpeed *= 2;
-        yield return new WaitForSeconds(30.0f);
-        playerSpeed = savePlayerSpeed;
-        isBoost = false;
+        SpeedUp(boostSpeed);
+        yield return new WaitForSeconds(boostTime);
+        IsBoost = false;
+        ResetSpeed();
     }
+
+    private void SpeedUp(float sp)
+    {
+        CurPlayerSpeed *= sp;
+        CurObstacleSpeed *= sp;
+        CurScaleSpeed *= sp;
+    }
+
+    private void ResetSpeed()
+    {
+        CurPlayerSpeed = playerSpeed;
+        CurObstacleSpeed = obstacleSpeed;
+        CurScaleSpeed = scaleSpeed;
+    }
+
+    #endregion
 }
