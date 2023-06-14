@@ -96,9 +96,4 @@ public class GameManager : MonoBehaviour
         target.transform.position = new Vector2(0, initTarget.PY());
         target.transform.localScale = new Vector2(initTarget.SX(), initTarget.SY());
     }
-
-    private void GroundMove()
-    {
-
-    }
-}
+ }

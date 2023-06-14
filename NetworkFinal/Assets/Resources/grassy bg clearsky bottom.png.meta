@@ -42,13 +42,13 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 687}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -114,18 +114,172 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: grassy bg clearsky bottom_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 3300
+        height: 1871
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6b81ce0472c23524d86072981022efe3
+      internalID: -1599122519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grassy bg clearsky bottom_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1867
+        width: 3300
+        height: 683
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eafdec2676a1c334aacaa69af4beaacc
+      internalID: 1211006500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grassy bg clearsky bottom_2
+      rect:
+        serializedVersion: 2
+        x: 1296
+        y: 1928
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2267b12b362deca4986c5937e4a6cf0a
+      internalID: -243762478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grassy bg clearsky bottom_3
+      rect:
+        serializedVersion: 2
+        x: 1358
+        y: 1930
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 73c2502735efa1b40b0bc66276b4e372
+      internalID: -662298225
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grassy bg clearsky bottom_4
+      rect:
+        serializedVersion: 2
+        x: 1370
+        y: 1932
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e15255e4690c25a4cb796447f810e039
+      internalID: -1606860045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grassy bg clearsky bottom_5
+      rect:
+        serializedVersion: 2
+        x: 1400
+        y: 1933
+        width: 7
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 935e3f16aace6f94f9a5ad5103143128
+      internalID: -1056958244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grassy bg clearsky bottom_6
+      rect:
+        serializedVersion: 2
+        x: 3295
+        y: 1935
+        width: 5
+        height: 4
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: defc2ace9e73c334da2fded47274dfab
+      internalID: -355240626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      grassy bg clearsky bottom_1: 1211006500
+      grassy bg clearsky bottom_0: -1599122519
+      grassy bg clearsky bottom_3: -662298225
+      grassy bg clearsky bottom_4: -1606860045
+      grassy bg clearsky bottom_6: -355240626
+      grassy bg clearsky bottom_2: -243762478
+      grassy bg clearsky bottom_5: -1056958244
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
