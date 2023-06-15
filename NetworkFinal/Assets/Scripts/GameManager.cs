@@ -12,11 +12,14 @@ public class GameManager : MonoBehaviour
     public float boostTime;
     public float groundSpeed;
     public TMP_Text distanceText;
+    public TMP_Text timeText;
 
     private static GameManager instance;
 
     private MeshRenderer groundRender;
     private float groundOffset;
+
+    private float mainTime;
 
     public bool IsBoost { get; private set; }
     public bool IsBoostAva { get; private set; }
@@ -67,12 +70,14 @@ public class GameManager : MonoBehaviour
         IsBoost = false;
         IsBoostAva = true;
         distance = 100;
+        mainTime = 0;
         InitSpeed();
     }
 
     private void Update()
     {
         if (IsGameOver) return;
+        TimeCheck();
         GroundRepeat();
         Distance();
         PlayerInput();
@@ -89,6 +94,12 @@ public class GameManager : MonoBehaviour
         }
         distance -= playerSpeed * Time.deltaTime;
         distanceText.text = $"Distance : {distance}";
+    }
+
+    private void TimeCheck()
+    {
+        mainTime += Time.deltaTime;
+        timeText.text = $"Time : {mainTime.ToString("F3")}s";
     }
 
     private void GroundRepeat()
