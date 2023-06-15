@@ -18,10 +18,17 @@ public class ObstacleController : MonoBehaviour
 
     private void Update()
     {
+        GamePlayCheck();
         MoveControll();
         ScaleControll();
         PlayerMove();
         GetSpeedFromGameManager();
+    }
+
+    private void GamePlayCheck()
+    {
+        if (GameManager.Instance.IsGameOver)
+            Destroy(gameObject);
     }
 
     private void GetSpeedFromGameManager()

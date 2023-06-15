@@ -10,12 +10,17 @@ public class GameManager : MonoBehaviour
     public float scaleSpeed;
     public float boostSpeed;
     public float boostTime;
+    public float groundSpeed;
     public TMP_Text distanceText;
 
     private static GameManager instance;
 
+    private MeshRenderer groundRender;
+    private float groundOffset;
+
     public bool IsBoost { get; private set; }
     public bool IsBoostAva { get; private set; }
+    public bool IsGameOver { get; private set; }
 
     private float distance;
     public float CurObstacleSpeed { get; private set; }
@@ -58,22 +63,38 @@ public class GameManager : MonoBehaviour
     
     private void Start()
     {
+        groundRender = GameObject.Find("Ground").GetComponent<MeshRenderer>();
         IsBoost = false;
         IsBoostAva = true;
-        distance = 1000;
+        distance = 100;
         InitSpeed();
     }
 
     private void Update()
     {
+        if (IsGameOver) return;
+        GroundRepeat();
         Distance();
         PlayerInput();
     }
     
     private void Distance()
     {
+        if (distance < 0)
+        {
+            distance = 0;
+            distanceText.text = "GOAL";
+            IsGameOver = true;
+            return;
+        }
         distance -= playerSpeed * Time.deltaTime;
         distanceText.text = $"Distance : {distance}";
+    }
+
+    private void GroundRepeat()
+    {
+        groundOffset += groundSpeed * Time.deltaTime;
+        groundRender.material.mainTextureOffset = new Vector2(0, groundOffset);
     }
 
     #region Boost

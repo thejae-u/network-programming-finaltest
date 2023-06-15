@@ -17,7 +17,8 @@ public class ObstacleGenerator : MonoBehaviour
 
     private void Update()
     {
-        GenObstacle();
+        if (!GameManager.Instance.IsGameOver)
+            GenObstacle();
     }
 
     private void GenObstacle()
