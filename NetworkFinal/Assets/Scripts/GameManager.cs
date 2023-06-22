@@ -7,19 +7,32 @@ public class GameManager : MonoBehaviour
 {
     public float obstacleSpeed;
     public float playerSpeed;
+
+    // 장애물이 커지는 속도
     public float scaleSpeed;
+
     public float boostSpeed;
     public float boostTime;
+
+    public float downSpeed;
+
+    // 바다의 무한 스크롤의 속도
     public float groundSpeed;
+
     public TMP_Text distanceText;
     public TMP_Text timeText;
 
     private static GameManager instance;
 
+    // 바다의 무한 스크롤을 위한 변수
     private MeshRenderer groundRender;
     private float groundOffset;
 
+    // 총 걸린 시간
     private float mainTime;
+
+    // 장애물에 부딪혔을 때 속도가 낮아진 상태인지를 저장하는 변수
+    private bool isSlow;
 
     public bool IsBoost { get; private set; }
     public bool IsBoostAva { get; private set; }
@@ -76,7 +89,11 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (IsGameOver) return;
+        if (IsGameOver)
+        {
+            return;
+        }
+
         TimeCheck();
         GroundRepeat();
         Distance();
@@ -92,20 +109,42 @@ public class GameManager : MonoBehaviour
             IsGameOver = true;
             return;
         }
-        distance -= playerSpeed * Time.deltaTime;
-        distanceText.text = $"Distance : {distance}";
+        distance -= CurPlayerSpeed * Time.deltaTime;
+        distanceText.text = $"Distance : {distance:F3}M";
     }
 
     private void TimeCheck()
     {
         mainTime += Time.deltaTime;
-        timeText.text = $"Time : {mainTime.ToString("F3")}s";
+        timeText.text = $"Time : {mainTime:F3}s";
     }
 
+    // 바다의 무한 스크롤을 위한 메소드
     private void GroundRepeat()
     {
         groundOffset += groundSpeed * Time.deltaTime;
         groundRender.material.mainTextureOffset = new Vector2(0, groundOffset);
+    }
+
+    
+    // 플레이어가 장애물에 부딪히면 호출되는 메소드
+    public void SpeedDown()
+    {
+        if (!isSlow)
+        {
+            isSlow = true;
+            CurPlayerSpeed /= downSpeed;
+            CurObstacleSpeed /= downSpeed;
+            CurScaleSpeed /= downSpeed;
+            StartCoroutine(SpeedDownTime());
+        }
+    }
+
+    private IEnumerator SpeedDownTime()
+    {
+        yield return new WaitForSeconds(3.0f);
+        isSlow = false;
+        ResetSpeed();
     }
 
     #region Boost
@@ -113,6 +152,7 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            NetworkManager.Instance.SendData($"{NetworkManager.Header.GameData},Boost");
             if (IsBoostAva)
                 Boost();
         }
