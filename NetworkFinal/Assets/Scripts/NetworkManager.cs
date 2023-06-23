@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -18,6 +19,11 @@ public class NetworkManager : MonoBehaviour
         GameData,
         ETC
     }
+
+    private string serverDomain;
+    private int port;
+    private Socket sock;
+    private IPEndPoint srvEp;
 
     private static NetworkManager instance;
 
@@ -47,20 +53,26 @@ public class NetworkManager : MonoBehaviour
 
     private void Start()
     {
-       
+        // 서버에 접속하기 위한 절차
+        serverDomain = "jaeu.iptime.org";
+        port = 55000;
+        IPAddress[] dnsIpAddress = Dns.GetHostAddresses(serverDomain);
+        IPAddress srvAddress = dnsIpAddress[0];
+        sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        srvEp = new IPEndPoint(srvAddress, port);
+        // 절차 끝
     }
 
-    public string SendData(string data)
+    public string SendData(Header head, string data)
     {
-        string[] splitData = data.Split(',');
-        Header dataHeader = (Header)int.Parse(splitData[0]);
-        switch (dataHeader)
+        byte[] buf = Encoding.UTF8.GetBytes(data);
+        switch (head)
         {
             case Header.PlayerInput:
-                break;
-            case Header.GameOption:
+                sock.SendTo(buf, srvEp);
                 break;
             case Header.GameData:
+                sock.SendTo(buf, srvEp);
                 break;
             case Header.ETC:
                 break;

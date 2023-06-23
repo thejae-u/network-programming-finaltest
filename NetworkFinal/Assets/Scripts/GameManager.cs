@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -21,6 +22,8 @@ public class GameManager : MonoBehaviour
 
     public TMP_Text distanceText;
     public TMP_Text timeText;
+
+    public Image boostImage;
 
     private static GameManager instance;
 
@@ -80,6 +83,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         groundRender = GameObject.Find("Ground").GetComponent<MeshRenderer>();
+        boostImage.color = new Color(255, 255, 255, 255);
         IsBoost = false;
         IsBoostAva = true;
         distance = 100;
@@ -133,6 +137,7 @@ public class GameManager : MonoBehaviour
         if (!isSlow)
         {
             isSlow = true;
+            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Hit");
             CurPlayerSpeed /= downSpeed;
             CurObstacleSpeed /= downSpeed;
             CurScaleSpeed /= downSpeed;
@@ -147,16 +152,44 @@ public class GameManager : MonoBehaviour
         ResetSpeed();
     }
 
-    #region Boost
+    private void PlayerMove()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftS");
+        }
+
+        if (Input.GetKeyUp(KeyCode.LeftArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftE");
+        }
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightS");
+        }
+
+        if (Input.GetKeyUp(KeyCode.RightArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightE");
+        }
+    }
     private void PlayerInput()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            NetworkManager.Instance.SendData($"{NetworkManager.Header.GameData},Boost");
             if (IsBoostAva)
+            {
+                NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "Boost");
+                boostImage.color = new Color(0, 0, 0, 0);
                 Boost();
+            }
         }
+
+        PlayerMove();
     }
+
+    #region Boost
 
     private void Boost()
     {
@@ -168,7 +201,8 @@ public class GameManager : MonoBehaviour
     private IEnumerator BoostWait()
     {
         StartCoroutine(Boosting());
-        yield return new WaitForSeconds(30.0f);
+        yield return new WaitForSeconds(5.0f);
+        boostImage.color = new Color(255, 255, 255, 255);
         IsBoostAva = true;
     }
 
