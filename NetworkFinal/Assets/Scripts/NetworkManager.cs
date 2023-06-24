@@ -20,6 +20,19 @@ public class NetworkManager : MonoBehaviour
         ETC
     }
 
+    [Serializable]
+    private class NetworkData
+    {
+        private Header head { get; set; }
+        private byte[] data { get; set; }
+
+        public NetworkData(Header header, string data)
+        {
+            this.data = Encoding.UTF8.GetBytes(data);
+            head = header;
+        }
+    }
+
     private string serverDomain;
     private int port;
     private Socket sock;
@@ -65,21 +78,18 @@ public class NetworkManager : MonoBehaviour
 
     public string SendData(Header head, string data)
     {
-        byte[] buf = Encoding.UTF8.GetBytes(data);
-        switch (head)
+        NetworkData nData = new(head, data);
+
+        byte[] serializeData;
+        
+        using (MemoryStream stream = new())
         {
-            case Header.PlayerInput:
-                sock.SendTo(buf, srvEp);
-                break;
-            case Header.GameData:
-                sock.SendTo(buf, srvEp);
-                break;
-            case Header.ETC:
-                break;
-            default:
-                Debug.LogError("Network Header Error");
-                break;
+            BinaryFormatter fomatter = new();
+            fomatter.Serialize(stream, nData);
+            serializeData = stream.ToArray();
         }
+
+        sock.SendTo(serializeData, srvEp);
         return "";
     }
 }
