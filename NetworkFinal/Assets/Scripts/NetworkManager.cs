@@ -7,6 +7,7 @@ using System.IO;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Xml.Serialization;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -15,28 +16,22 @@ public class NetworkManager : MonoBehaviour
     public enum Header
     {
         PlayerInput,
-        GameOption,
         GameData,
+        GameOption,
         ETC
     }
 
     [Serializable]
-    private class NetworkData
+    public class NetworkData
     {
-        private Header head { get; set; }
-        private byte[] data { get; set; }
-
-        public NetworkData(Header header, string data)
-        {
-            this.data = Encoding.UTF8.GetBytes(data);
-            head = header;
-        }
+        public Header head { get; set; }
+        public byte[] data { get; set; }
     }
 
     private string serverDomain;
     private int port;
     private Socket sock;
-    private IPEndPoint srvEp;
+    private EndPoint srvEp;
 
     private static NetworkManager instance;
 
@@ -51,6 +46,7 @@ public class NetworkManager : MonoBehaviour
             return instance;
         }
     }
+
     private void Awake()
     {
         if(instance == null)
@@ -78,18 +74,27 @@ public class NetworkManager : MonoBehaviour
 
     public string SendData(Header head, string data)
     {
-        NetworkData nData = new(head, data);
+        // 데이터를 Network클래스로 저장하고 xml로 직렬화 하는 절차
+        NetworkData networkData = new NetworkData();
+        networkData.head = head;
+        networkData.data = Encoding.UTF8.GetBytes(data);
 
-        byte[] serializeData;
-        
-        using (MemoryStream stream = new())
-        {
-            BinaryFormatter fomatter = new();
-            fomatter.Serialize(stream, nData);
-            serializeData = stream.ToArray();
-        }
+        XmlSerializer xmlSerializer = new XmlSerializer(typeof(NetworkData));
+        StringWriter stringWriter = new StringWriter();
 
-        sock.SendTo(serializeData, srvEp);
-        return "";
+        xmlSerializer.Serialize(stringWriter, networkData);
+        string xmlString = stringWriter.ToString();
+        // 절차 끝
+
+        // 데이터를 byte로 서버에 보냄
+        byte[] sendToServerData = Encoding.UTF8.GetBytes(xmlString);
+        sock.SendTo(sendToServerData, srvEp);
+
+        // 서버로 부터 데이터를 다시 받음
+        byte[] rcvData = new byte[1024];
+        int nRcvd = sock.ReceiveFrom(rcvData, ref srvEp);
+        string rcvDataStr = Encoding.UTF8.GetString(rcvData, 0, nRcvd);
+
+        return rcvDataStr;
     }
 }

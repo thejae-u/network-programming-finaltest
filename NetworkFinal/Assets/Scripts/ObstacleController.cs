@@ -56,16 +56,19 @@ public class ObstacleController : MonoBehaviour
 
     private void PlayerMove()
     {
-        if (Input.GetKey(KeyCode.LeftArrow))
+        float movePos;
+        switch (GameManager.Instance.MoveDirect)
         {
-            float movePos = transform.position.x + playerSpeed * Time.deltaTime;
-            transform.position = new Vector2(movePos, transform.position.y);
-        }
-
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            float movePos = transform.position.x - playerSpeed * Time.deltaTime;
-            transform.position = new Vector2(movePos, transform.position.y);
+            case "MoveL":
+                movePos = transform.position.x + playerSpeed * Time.deltaTime;
+                transform.position = new Vector2(movePos, transform.position.y);
+                break;
+            case "MoveR":
+                movePos = transform.position.x - playerSpeed * Time.deltaTime;
+                transform.position = new Vector2(movePos, transform.position.y);
+                break;
+            default:
+                break;
         }
     }
 

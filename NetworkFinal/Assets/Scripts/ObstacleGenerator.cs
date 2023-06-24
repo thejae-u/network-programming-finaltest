@@ -17,7 +17,7 @@ public class ObstacleGenerator : MonoBehaviour
 
     private void Update()
     {
-        if (!GameManager.Instance.IsGameOver)
+        if (!GameManager.Instance.IsGameOver && GameManager.Instance.IsStarted)
             GenObstacle();
     }
 
@@ -31,6 +31,9 @@ public class ObstacleGenerator : MonoBehaviour
                 curTime = genTime;
             else
                 curTime = genTime / 2;
+
+            int seed = int.Parse(NetworkManager.Instance.SendData(NetworkManager.Header.GameOption, ""));
+            Random.InitState(seed);
             float randomX = Random.Range(-8, 9);
             Instantiate(obstaclePrefab, new Vector2(randomX, 1.8f), Quaternion.identity);
         }

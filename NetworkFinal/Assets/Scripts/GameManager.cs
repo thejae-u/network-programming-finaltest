@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -25,6 +26,9 @@ public class GameManager : MonoBehaviour
 
     public Image boostImage;
 
+    public GameObject gameOverPanel;
+    public TMP_Text timeEndText;
+
     private static GameManager instance;
 
     // 바다의 무한 스크롤을 위한 변수
@@ -39,7 +43,10 @@ public class GameManager : MonoBehaviour
 
     public bool IsBoost { get; private set; }
     public bool IsBoostAva { get; private set; }
+    public bool IsStarted { get; private set; }
     public bool IsGameOver { get; private set; }
+
+    public string MoveDirect { get; private set; }
 
     private float distance;
     public float CurObstacleSpeed { get; private set; }
@@ -83,9 +90,11 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         groundRender = GameObject.Find("Ground").GetComponent<MeshRenderer>();
+        gameOverPanel.SetActive(false);
         boostImage.color = new Color(255, 255, 255, 255);
         IsBoost = false;
         IsBoostAva = true;
+        IsStarted = false;
         distance = 100;
         mainTime = 0;
         InitSpeed();
@@ -93,24 +102,41 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (IsGameOver)
+        if (IsGameOver) return;
+        if (!IsStarted)
         {
+            StartWait();
             return;
         }
 
-        TimeCheck();
-        GroundRepeat();
-        Distance();
-        PlayerInput();
+        if (IsStarted)
+        {
+            TimeCheck();
+            GroundRepeat();
+            Distance();
+            PlayerInput();
+        }
+    }
+
+    private void StartWait()
+    {
+        distanceText.text = "Click Space to Start!";
+        if (Input.GetKeyDown(KeyCode.Space) && !IsStarted)
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Start");
+            IsStarted = true;
+        }
     }
     
     private void Distance()
     {
-        if (distance < 0)
+        if (distance < 0 && !IsGameOver)
         {
             distance = 0;
             distanceText.text = "GOAL";
             IsGameOver = true;
+            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Goal");
+            GameOverSeq();
             return;
         }
         distance -= CurPlayerSpeed * Time.deltaTime;
@@ -121,6 +147,21 @@ public class GameManager : MonoBehaviour
     {
         mainTime += Time.deltaTime;
         timeText.text = $"Time : {mainTime:F3}s";
+    }
+
+    private void GameOverSeq()
+    {
+        gameOverPanel.SetActive(true);
+        timeText.text = "";
+        distanceText.text = "";
+        boostImage.color = new Color(0, 0, 0, 0);
+        timeEndText.text = mainTime.ToString("F3");
+    }
+
+    public void OnRestartButtonClick()
+    {
+        Destroy(gameObject);
+        SceneManager.LoadScene("GameScene");
     }
 
     // 바다의 무한 스크롤을 위한 메소드
@@ -156,22 +197,22 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftS");
+            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftS");
         }
 
         if (Input.GetKeyUp(KeyCode.LeftArrow))
         {
-            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftE");
+            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftE");
         }
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightS");
+            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightS");
         }
 
         if (Input.GetKeyUp(KeyCode.RightArrow))
         {
-            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightE");
+            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightE");
         }
     }
     private void PlayerInput()
@@ -180,7 +221,7 @@ public class GameManager : MonoBehaviour
         {
             if (IsBoostAva)
             {
-                NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "Boost");
+                NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Boost");
                 boostImage.color = new Color(0, 0, 0, 0);
                 Boost();
             }
@@ -202,7 +243,8 @@ public class GameManager : MonoBehaviour
     {
         StartCoroutine(Boosting());
         yield return new WaitForSeconds(5.0f);
-        boostImage.color = new Color(255, 255, 255, 255);
+        if (IsGameOver)
+            boostImage.color = new Color(255, 255, 255, 255);
         IsBoostAva = true;
     }
 
