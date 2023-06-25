@@ -4,6 +4,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Text;
 
 public class GameManager : MonoBehaviour
 {
@@ -28,8 +29,14 @@ public class GameManager : MonoBehaviour
 
     public GameObject gameOverPanel;
     public TMP_Text timeEndText;
+    public TMP_Text bestScore;
+
+    public GameObject scrollView;
 
     private static GameManager instance;
+
+    // 유저의 정보를 담아두는 변수
+    private USERINFO uinfo;
 
     // 바다의 무한 스크롤을 위한 변수
     private MeshRenderer groundRender;
@@ -38,8 +45,13 @@ public class GameManager : MonoBehaviour
     // 총 걸린 시간
     private float mainTime;
 
+    // 저장된 최고 점수 (시간)
+    private float bestTime;
+
     // 장애물에 부딪혔을 때 속도가 낮아진 상태인지를 저장하는 변수
     private bool isSlow;
+
+    private bool isDistanceUpdateToServer = false;
 
     public bool IsBoost { get; private set; }
     public bool IsBoostAva { get; private set; }
@@ -90,7 +102,9 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         groundRender = GameObject.Find("Ground").GetComponent<MeshRenderer>();
+        uinfo = GameObject.Find("USERINFO").GetComponent<USERINFO>();
         gameOverPanel.SetActive(false);
+        scrollView.SetActive(true);
         boostImage.color = new Color(255, 255, 255, 255);
         IsBoost = false;
         IsBoostAva = true;
@@ -102,7 +116,10 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (IsGameOver) return;
+        if (IsGameOver)
+        {
+            return;
+        }
         if (!IsStarted)
         {
             StartWait();
@@ -111,10 +128,44 @@ public class GameManager : MonoBehaviour
 
         if (IsStarted)
         {
+            NetworkDequeue();
             TimeCheck();
             GroundRepeat();
             Distance();
             PlayerInput();
+        }
+    }
+    
+    // 서버로부터 받은 정보를 하나씩 처리
+    private void NetworkDequeue()
+    {
+        if (NetworkManager.Instance.networkQueue.Count != 0)
+        {
+            NetworkManager.NetworkData rcvdData = NetworkManager.Instance.networkQueue.Dequeue();
+            string rcvdDataString = Encoding.UTF8.GetString(rcvdData.data);
+            switch (rcvdData.head)
+            {
+                case NetworkManager.Header.PlayerInput:
+                    switch (rcvdDataString)
+                    {
+                        case "MoveL":
+                            MoveDirect = rcvdDataString;
+                            break;
+                        case "MoveR":
+                            MoveDirect = rcvdDataString;
+                            break;
+                        case "Stop":
+                            MoveDirect = "";
+                            break;
+                        case "Boost":
+                            Boost();
+                            break;
+                    }
+                    break;
+                case NetworkManager.Header.Best:
+                    Debug.Log($"{rcvdDataString}");
+                    break;
+            }
         }
     }
 
@@ -123,7 +174,7 @@ public class GameManager : MonoBehaviour
         distanceText.text = "Click Space to Start!";
         if (Input.GetKeyDown(KeyCode.Space) && !IsStarted)
         {
-            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Start");
+            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, uinfo.Uid, "Start");
             IsStarted = true;
         }
     }
@@ -133,14 +184,26 @@ public class GameManager : MonoBehaviour
         if (distance < 0 && !IsGameOver)
         {
             distance = 0;
-            distanceText.text = "GOAL";
             IsGameOver = true;
-            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Goal");
+            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, uinfo.Uid, $"Goal,{mainTime}");
             GameOverSeq();
             return;
         }
+
+        if (!isDistanceUpdateToServer && distance != 0)
+        {
+            StartCoroutine(WaitUpdateDistance());
+        }
         distance -= CurPlayerSpeed * Time.deltaTime;
         distanceText.text = $"Distance : {distance:F3}M";
+    }
+
+    private IEnumerator WaitUpdateDistance()
+    {
+        isDistanceUpdateToServer = true;
+        NetworkManager.Instance.SendData(NetworkManager.Header.GameData, uinfo.Uid, $"Distance,{distance:F3},{mainTime:F3}");
+        yield return new WaitForSeconds(0.1f);
+        isDistanceUpdateToServer = false;
     }
 
     private void TimeCheck()
@@ -151,17 +214,35 @@ public class GameManager : MonoBehaviour
 
     private void GameOverSeq()
     {
+        NetworkManager.Instance.SendData(NetworkManager.Header.Best, uinfo.Uid, "");
+        StartCoroutine(WaitEndTime());
+    }
+
+    private IEnumerator WaitEndTime()
+    {
+        yield return new WaitForSeconds(0.5f);
         gameOverPanel.SetActive(true);
+        scrollView.SetActive(false);
         timeText.text = "";
         distanceText.text = "";
         boostImage.color = new Color(0, 0, 0, 0);
-        timeEndText.text = mainTime.ToString("F3");
+        timeEndText.text = $"Time : {mainTime.ToString("F3")}";
     }
 
     public void OnRestartButtonClick()
     {
         Destroy(gameObject);
         SceneManager.LoadScene("GameScene");
+    }
+
+    public void OnQuitButtonClick()
+    {
+        NetworkManager.Instance.SendData(NetworkManager.Header.Quit, uinfo.Uid, "Quit");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     // 바다의 무한 스크롤을 위한 메소드
@@ -178,7 +259,7 @@ public class GameManager : MonoBehaviour
         if (!isSlow)
         {
             isSlow = true;
-            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Hit");
+            NetworkManager.Instance.SendData(NetworkManager.Header.GameData, uinfo.Uid, "Hit");
             CurPlayerSpeed /= downSpeed;
             CurObstacleSpeed /= downSpeed;
             CurScaleSpeed /= downSpeed;
@@ -193,41 +274,42 @@ public class GameManager : MonoBehaviour
         ResetSpeed();
     }
 
-    private void PlayerMove()
-    {
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftS");
-        }
-
-        if (Input.GetKeyUp(KeyCode.LeftArrow))
-        {
-            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "LeftE");
-        }
-
-        if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightS");
-        }
-
-        if (Input.GetKeyUp(KeyCode.RightArrow))
-        {
-            MoveDirect = NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, "RightE");
-        }
-    }
+    
     private void PlayerInput()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
             if (IsBoostAva)
             {
-                NetworkManager.Instance.SendData(NetworkManager.Header.GameData, "Boost");
+                NetworkManager.Instance.SendData(NetworkManager.Header.GameData, uinfo.Uid, "Boost");
                 boostImage.color = new Color(0, 0, 0, 0);
                 Boost();
             }
         }
 
         PlayerMove();
+    }
+    private void PlayerMove()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, uinfo.Uid, "LeftS");
+        }
+
+        if (Input.GetKeyUp(KeyCode.LeftArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, uinfo.Uid, "LeftE");
+        }
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, uinfo.Uid, "RightS");
+        }
+
+        if (Input.GetKeyUp(KeyCode.RightArrow))
+        {
+            NetworkManager.Instance.SendData(NetworkManager.Header.PlayerInput, uinfo.Uid, "RightE");
+        }
     }
 
     #region Boost
@@ -242,8 +324,8 @@ public class GameManager : MonoBehaviour
     private IEnumerator BoostWait()
     {
         StartCoroutine(Boosting());
-        yield return new WaitForSeconds(5.0f);
-        if (IsGameOver)
+        yield return new WaitForSeconds(10.0f);
+        if (!IsGameOver)
             boostImage.color = new Color(255, 255, 255, 255);
         IsBoostAva = true;
     }
@@ -270,5 +352,5 @@ public class GameManager : MonoBehaviour
         CurScaleSpeed = scaleSpeed;
     }
 
-    #endregion
+#endregion
 }

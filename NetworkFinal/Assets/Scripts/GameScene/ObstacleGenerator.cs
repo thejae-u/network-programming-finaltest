@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Text;
 
 public class ObstacleGenerator : MonoBehaviour
 {
@@ -8,10 +9,13 @@ public class ObstacleGenerator : MonoBehaviour
 
     public float genTime;
 
+    private USERINFO uinfo;
+
     private float curTime;
 
     private void Start()
     {
+        uinfo = GameObject.Find("USERINFO").GetComponent<USERINFO>();
         curTime = 0f;
     }
 
@@ -32,7 +36,16 @@ public class ObstacleGenerator : MonoBehaviour
             else
                 curTime = genTime / 2;
 
-            int seed = int.Parse(NetworkManager.Instance.SendData(NetworkManager.Header.GameOption, ""));
+            int seed = 0;
+            NetworkManager.Instance.SendData(NetworkManager.Header.GameOption, uinfo.Uid, "");
+            foreach(var networkData in NetworkManager.Instance.networkQueue)
+            {
+                if(networkData.head == NetworkManager.Header.GameOption)
+                {
+                    string seedStr = Encoding.UTF8.GetString(networkData.data);
+                    seed = int.Parse(seedStr);
+                }
+            }
             Random.InitState(seed);
             float randomX = Random.Range(-8, 9);
             Instantiate(obstaclePrefab, new Vector2(randomX, 1.8f), Quaternion.identity);
